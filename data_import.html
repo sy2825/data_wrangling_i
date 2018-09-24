@@ -127,7 +127,34 @@ $(document).ready(function () {
 </div>
 
 
-
+<div id="import-fas-csv-files" class="section level2">
+<h2>Import FAS csv files</h2>
+<p>Impprt my first csv (<code>FAS_litters.csv</code>).</p>
+<pre class="r"><code> litters_data = read_csv(file = &quot;./data/FAS_litters.csv&quot;)</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   Group = col_character(),
+##   `Litter Number` = col_character(),
+##   `GD0 weight` = col_double(),
+##   `GD18 weight` = col_double(),
+##   `GD of Birth` = col_integer(),
+##   `Pups born alive` = col_integer(),
+##   `Pups dead @ birth` = col_integer(),
+##   `Pups survive` = col_integer()
+## )</code></pre>
+<pre class="r"><code> litters_data = janitor::clean_names(litters_data)</code></pre>
+<p>Import the pups data also.</p>
+<pre class="r"><code>pups_data = read_csv(file = &quot;./data/FAS_pups.csv&quot;)</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   `Litter Number` = col_character(),
+##   Sex = col_integer(),
+##   `PD ears` = col_integer(),
+##   `PD eyes` = col_integer(),
+##   `PD pivot` = col_integer(),
+##   `PD walk` = col_integer()
+## )</code></pre>
+</div>
 
 
 
