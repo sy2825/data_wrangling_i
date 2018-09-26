@@ -90,6 +90,47 @@ filter(litters_data, pups_born_alive %in% 4:7, !is.na(gd0_weight))
 
 ```
 
+## Mutate
+
+Creat variables
+
+```{r}
+mutate(litters_data,
+       wt_gain = gd18_weight - gd0_weight,
+       group = tolower(group)
+)
+
+mutate(litters_data,
+
+      wt_gain = gd18_weight - gd0_weight,
+      wt_gain_squared = wt_gain^2
+)
+```
+## Arrange
+
+Arrange the data...
+
+```{r}
+arrange(litters_data, gd0_weight)
+
+arrange(litters_data, desc(pups_born_alive), gd0_weight)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
