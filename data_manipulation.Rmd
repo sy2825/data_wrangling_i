@@ -24,3 +24,59 @@ pups_data = read_csv("./data/FAS_pups.csv",
   col_types = "ciiiii")
 pups_data = janitor::clean_names(pups_data)
 ```
+
+
+## Select variables
+... by listing
+```{r}
+select(
+  litters_data, group, litter_number, gd0_weight)
+
+select(
+  litters_data, litter_number, gd0_weight, pups_survive
+)
+
+```
+
+...by specifying a range:
+
+```{r}
+select(litters_data, gd_of_birth:pups_survive)
+
+select(litters_data, group, gd_of_birth:pups_survive)
+
+```
+
+
+... by saying what you wat to remove:
+
+```{r}
+select(litters_data, -litter_number)
+```
+... and rename
+
+```{r}
+select(litters_data, group, litter_number, gest_day_0_weight = gd0_weight)
+rename(litters_data, gest_day_0_weight = gd0_weight)
+```
+... use select helpers:
+```{r}
+select(litters_data, starts_with("gd"))
+
+select(litters_data, litter_number, starts_with("pup"))
+
+select(litters_data, litter_number, everything())
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
