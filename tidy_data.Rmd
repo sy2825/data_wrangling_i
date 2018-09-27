@@ -1,5 +1,5 @@
 ---
-title: "Data Manipulation"
+title: "Tidy data"
 author: "Shuo Yan"
 output: html_document
 ---
@@ -11,180 +11,75 @@ library(tidyverse)
 ```
 
 
-## Import FAS csv files
-
- Impprt my csv files to use as examples.
+## gather
+ PULSE data
  
 ```{r}
-litters_data = read_csv("./data/FAS_litters.csv",
-  col_types = "ccddiiii")
-litters_data = janitor::clean_names(litters_data)
-
-pups_data = read_csv("./data/FAS_pups.csv",
-  col_types = "ciiiii")
-pups_data = janitor::clean_names(pups_data)
+pulse_data = haven::read_sas("./data/public_pulse_data.sas7bdat") %>%
+  janitor::clean_names()
+pulse_data
 ```
-
-
-## Select variables
-... by listing
-```{r}
-select(
-  litters_data, group, litter_number, gd0_weight)
-
-select(
-  litters_data, litter_number, gd0_weight, pups_survive
-)
-
-```
-
-...by specifying a range:
+This isn't tidy yet ...
 
 ```{r}
-select(litters_data, gd_of_birth:pups_survive)
-
-select(litters_data, group, gd_of_birth:pups_survive)
-
+pulse_tidy = pulse_data %>%
+  gather(key = "visit", value = "bdi_score", bdi_score_bl:bdi_score_12m)
 ```
 
-
-... by saying what you wat to remove:
+Illustrate `separate`
 
 ```{r}
-select(litters_data, -litter_number)
+pulse_tidy %>%
+  separate(visit, into = c("bdi_str", "score_str", "visit"), sep = "_") %>%
+select(-bdi_str, -score_str) %>%
+mutate(visit = replace(visit, visit == "bl", "00m"))
 ```
-... and rename
+All together, the data import / cleaning pipeline is:
 
 ```{r}
-select(litters_data, group, litter_number, gest_day_0_weight = gd0_weight)
-rename(litters_data, gest_day_0_weight = gd0_weight)
-```
-... use select helpers:
-```{r}
-select(litters_data, starts_with("gd"))
-
-select(litters_data, litter_number, starts_with("pup"))
-
-select(litters_data, litter_number, everything())
-
-```
-## Filter observations
-
-Do some filtering!
-
-```{r}
-filter(litters_data, gd0_weight < 25)
-
-filter(litters_data, gd0_weight >= 25)
-
-filter(litters_data, pups_born_alive == 8)
-
-filter(litters_data, !is.na(gd0_weight))
-
-filter(litters_data, group == "Low8" | group == "Low7")
-filter(litters_data, group %in% c("Low7", "Low8"))
-
-filter(litters_data, pups_born_alive %in% 4:6)
-
-filter(litters_data, pups_born_alive %in% 4:7, !is.na(gd0_weight))
-
-```
-
-## Mutate
-
-Creat variables
-
-```{r}
-mutate(litters_data,
-       wt_gain = gd18_weight - gd0_weight,
-       group = tolower(group)
-)
-
-mutate(litters_data,
-
-      wt_gain = gd18_weight - gd0_weight,
-      wt_gain_squared = wt_gain^2
-)
-```
-## Arrange
-
-Arrange the data...
-
-```{r}
-arrange(litters_data, gd0_weight)
-
-arrange(litters_data, desc(pups_born_alive), gd0_weight)
-
-```
-
-## Piping!!
-
-Look at intermediate object approach:
-
-```{r}
-litters_data_raw = read_csv("./data/FAS_litters.csv",
-  col_types = "ccddiiii")
-litters_data_clean_names = janitor::clean_names(litters_data_raw)
-litters_data_selected_cols = select(litters_data_clean_names, -pups_survive)
-litters_data_with_vars = mutate(litters_data_selected_cols, 
-  wt_gain = gd18_weight - gd0_weight,
-  group = tolower(group))
-litters_data_with_vars
-
-```
-
-Use nested function calls:
-
-```{r}
-litters_data_clean = 
-  mutate(
-    select(
-      janitor::clean_names(
-        read_csv("./data/FAS_litters.csv", col_types = "ccddiiii")
-        ), 
-    -pups_survive
-    ),
-  wt_gain = gd18_weight - gd0_weight,
-  group = tolower(group)
-  )
-litters_data_clean
-
-```
-
-Use piping
-
-```{r}
-        read_csv("./data/FAS_litters.csv", col_types = "ccddiiii") %>%
+pulse_df =
+  haven::read_sas("./data/public_pulse_data.sas7bdat") %>%
   janitor::clean_names() %>%
-  select(-pups_survive) %>%
-  mutate(
-    wt_gain = gd18_weight - gd0_weight,
-    group = tolower(group)
-  ) %>%
-  filter(.data = ., !is.na(gd0_weight))
+   gather(key = "visit", value = "bdi_score", bdi_score_bl:bdi_score_12m) %>%
+   separate(visit, into = c("bdi_str", "score_str", "visit"), sep = "_") %>%
+select(-bdi_str, -score_str) %>%
+mutate(visit = replace(visit, visit == "bl", "00m"))
 ```
 
+## Revisit FAS_litters
 
+```{r}
+litters_data = read_csv("./data/FAS_litters.csv", col_types = "ccddiiii") %>%
+  janitor::clean_names() %>%
+  separate(group, into = c("dose", "day"), 3)
+```
+Data cleaning / tidying:
 
+```{r}
+litters_data = read_csv("./data/FAS_litters.csv", col_types = "ccddiiii") %>%
+  janitor::clean_names() %>%
+  select(litter_number, ends_with("weight")) %>%
+  gather(key = "gest_day", value = "weight", gd0_weight:gd18_weight) %>%
+mutate(gest_day = recode(gest_day, "gd0_weight" = 0, "gd18_weight" = 18)) %>%
+    arrange(litter_number)
 
+```
+## Spread
 
+```{r}
+analysis_result = tibble(
+  group = c("treatment", "treatment", "placebo", "placebo"),
+  time = c("pre", "post", "pre", "post"),
+  mean = c(4, 8, 3.5, 4)
+)
 
+```
+Make it readable:
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```{r}
+analysis_result %>%
+  spread(key = time, value = mean) %>%
+  knitr::kable()
+```
 
 
